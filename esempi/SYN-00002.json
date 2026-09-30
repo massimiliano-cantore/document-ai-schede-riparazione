@@ -1,0 +1,56 @@
+{
+  "doc_id": "SYN-00002",
+  "riparazione_n": "26/08",
+  "data": "27/08/2024",
+  "cliente": "LOGISTICA PADANA",
+  "articolo": "20415",
+  "pezzi": 1,
+  "ricevuto_il": "25/08/2024",
+  "ddt_n": null,
+  "ddt_del": null,
+  "prodotto_il": "11/2018",
+  "seriale": "8027/4634",
+  "aperta_manomessa": true,
+  "tempo_riparazione_min": 20,
+  "firmware": null,
+  "righe": [
+    {
+      "codice": "TIR0012",
+      "descrizione": "TIRANTE",
+      "intervento": "SOSTITUZIONE",
+      "causa": "MANCANTE",
+      "pz": 1,
+      "intervento_idem": false,
+      "causa_idem": false
+    },
+    {
+      "codice": "TIR0012",
+      "descrizione": "TIRANTE",
+      "intervento": "SOSTITUZIONE",
+      "causa": "ROTTO",
+      "pz": 1,
+      "intervento_idem": true,
+      "causa_idem": false
+    },
+    {
+      "codice": "CAT3310",
+      "descrizione": "CATENACCIO",
+      "intervento": "SOSTITUZIONE",
+      "causa": "ROTTO",
+      "pz": 1,
+      "intervento_idem": true,
+      "causa_idem": true
+    },
+    {
+      "codice": "CAV2210",
+      "descrizione": "CAVO",
+      "intervento": "PULIZIA",
+      "causa": null,
+      "pz": 1,
+      "intervento_idem": false,
+      "causa_idem": false
+    }
+  ],
+  "note": "NESSUNA ANOMALIA RISCONTRATA.\nCOLLAUDO\nPRIVO ACCESSORI",
+  "eseguito_il": "28/08/2024"
+}

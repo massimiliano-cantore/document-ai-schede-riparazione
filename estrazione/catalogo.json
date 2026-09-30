@@ -1,0 +1,101 @@
+{
+ "componenti": [
+  {
+   "codice": "SCA4471N",
+   "descrizione": "SCATOLA NEUTRA"
+  },
+  {
+   "codice": "CAV2210",
+   "descrizione": "CAVO"
+  },
+  {
+   "codice": "SEN4420",
+   "descrizione": "SENSORE MAGNETICO"
+  },
+  {
+   "codice": "MOL2201",
+   "descrizione": "MOLLA"
+  },
+  {
+   "codice": "LEV3301",
+   "descrizione": "LEVA"
+  },
+  {
+   "codice": "CON1015",
+   "descrizione": "CONNETTORE"
+  },
+  {
+   "codice": "SCB1180",
+   "descrizione": "CIRCUITO"
+  },
+  {
+   "codice": "BOB5510",
+   "descrizione": "BOBINA"
+  },
+  {
+   "codice": "MOT3302",
+   "descrizione": "MOTORINO"
+  },
+  {
+   "codice": "PIG1120",
+   "descrizione": "PIGNONE"
+  },
+  {
+   "codice": "PER0907",
+   "descrizione": "PERNO"
+  },
+  {
+   "codice": "NOT2290",
+   "descrizione": "NOTTOLINO"
+  },
+  {
+   "codice": "GUI0815",
+   "descrizione": "GUIDA"
+  },
+  {
+   "codice": "RUO7702",
+   "descrizione": "RUOTA DENTATA"
+  },
+  {
+   "codice": "IMP5601",
+   "descrizione": "IMPUGNATURA"
+  },
+  {
+   "codice": "CAT3310",
+   "descrizione": "CATENACCIO"
+  },
+  {
+   "codice": "TIR0012",
+   "descrizione": "TIRANTE"
+  },
+  {
+   "codice": "BOC0040",
+   "descrizione": "BOCCOLA"
+  },
+  {
+   "codice": "MIC1195",
+   "descrizione": "MICRO"
+  },
+  {
+   "codice": "GUA4420",
+   "descrizione": "GUAINA ISOLANTE"
+  },
+  {
+   "codice": "SEN4425",
+   "descrizione": "SENSORE REED"
+  }
+ ],
+ "interventi": [
+  "MODIFICA",
+  "PULIZIA",
+  "SOSTITUZIONE"
+ ],
+ "cause": [
+  "BRUCIATO",
+  "DEFORMATO",
+  "MANCANTE",
+  "OBSOLETO",
+  "ROTTO",
+  "USURATO"
+ ]
+}

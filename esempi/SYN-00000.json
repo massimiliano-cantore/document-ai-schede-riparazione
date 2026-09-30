@@ -1,0 +1,65 @@
+{
+  "doc_id": "SYN-00000",
+  "riparazione_n": "04/12",
+  "data": "06/12/2023",
+  "cliente": "IMPIANTI ROSSETTI",
+  "articolo": "40806",
+  "pezzi": 1,
+  "ricevuto_il": "06/12/2023",
+  "ddt_n": "2943",
+  "ddt_del": "21/11/2023",
+  "prodotto_il": null,
+  "seriale": "961656",
+  "aperta_manomessa": false,
+  "tempo_riparazione_min": 20,
+  "firmware": "V7",
+  "righe": [
+    {
+      "codice": "SCA4471N",
+      "descrizione": "SCATOLA NEUTRA",
+      "intervento": "SOSTITUZIONE",
+      "causa": "MANCANTE",
+      "pz": 3,
+      "intervento_idem": false,
+      "causa_idem": false
+    },
+    {
+      "codice": "CAV2210",
+      "descrizione": "CAVO",
+      "intervento": "SOSTITUZIONE",
+      "causa": "BRUCIATO",
+      "pz": 1,
+      "intervento_idem": true,
+      "causa_idem": false
+    },
+    {
+      "codice": "CON1015",
+      "descrizione": "CONNETTORE",
+      "intervento": "SOSTITUZIONE",
+      "causa": "ROTTO",
+      "pz": 1,
+      "intervento_idem": true,
+      "causa_idem": false
+    },
+    {
+      "codice": "GUA4420",
+      "descrizione": "GUAINA ISOLANTE",
+      "intervento": "SOSTITUZIONE",
+      "causa": "DEFORMATO",
+      "pz": 1,
+      "intervento_idem": true,
+      "causa_idem": false
+    },
+    {
+      "codice": "SEN4420",
+      "descrizione": "SENSORE MAGNETICO",
+      "intervento": "SOSTITUZIONE",
+      "causa": "DEFORMATO",
+      "pz": 1,
+      "intervento_idem": true,
+      "causa_idem": true
+    }
+  ],
+  "note": "PRESENTA PISTE INTERROTTE SUL CIRCUITO.\nREVISIONE GENERALE",
+  "eseguito_il": null
+}

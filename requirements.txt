@@ -1,0 +1,9 @@
+numpy
+pillow
+Hershey-Fonts
+json-repair
+# su Kaggle/GPU per l'estrazione:
+# transformers>=4.49
+# accelerate
+# qwen-vl-utils
+# torch

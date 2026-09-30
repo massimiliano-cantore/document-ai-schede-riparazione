@@ -1,0 +1,38 @@
+{
+  "schede": 100,
+  "json_non_validi": 0,
+  "accuratezza_campi": {
+    "aperta_manomessa": 0.87,
+    "articolo": 1.0,
+    "cliente": 1.0,
+    "data": 1.0,
+    "ddt_del": 1.0,
+    "ddt_n": 1.0,
+    "eseguito_il": 0.85,
+    "firmware": 0.87,
+    "n_righe": 0.94,
+    "pezzi": 1.0,
+    "prodotto_il": 0.73,
+    "ricevuto_il": 1.0,
+    "righe.causa": 0.741,
+    "righe.codice": 0.955,
+    "righe.descrizione": 0.955,
+    "righe.intervento": 0.891,
+    "righe.pz": 0.984,
+    "riparazione_n": 1.0,
+    "seriale": 0.32,
+    "tempo_riparazione_min": 0.85
+  },
+  "accuratezza_stampati": 1,
+  "accuratezza_a_mano": 0.854,
+  "note_parole_ritrovate": 0.715,
+  "schede_perfette": 0.07,
+  "secondi_per_scheda": 55.4,
+  "costo_per_scheda_usd": 0,
+  "auto_segnalazione": {
+    "errore_segnalato": 191,
+    "errore_non_segnalato": 83,
+    "ok_segnalato": 340
+  },
+  "errori_intercettati": 0.697
+}

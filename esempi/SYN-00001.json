@@ -1,0 +1,38 @@
+{
+  "doc_id": "SYN-00001",
+  "riparazione_n": "46/08",
+  "data": "01/08/2023",
+  "cliente": "HOTEL AURORA",
+  "articolo": "20410",
+  "pezzi": 1,
+  "ricevuto_il": "29/07/2023",
+  "ddt_n": "720",
+  "ddt_del": "14/07/2023",
+  "prodotto_il": "07/2017",
+  "seriale": "691784",
+  "aperta_manomessa": true,
+  "tempo_riparazione_min": 30,
+  "firmware": null,
+  "righe": [
+    {
+      "codice": "CON1015",
+      "descrizione": "CONNETTORE",
+      "intervento": "MODIFICA",
+      "causa": null,
+      "pz": 1,
+      "intervento_idem": false,
+      "causa_idem": false
+    },
+    {
+      "codice": "CON1015",
+      "descrizione": "CONNETTORE",
+      "intervento": "MODIFICA",
+      "causa": "OBSOLETO",
+      "pz": 3,
+      "intervento_idem": true,
+      "causa_idem": false
+    }
+  ],
+  "note": "NON RISCONTRATO DIFETTO LAMENTATO DAL CLIENTE. SI SOSTITUISCE CIRCUITO CON NUOVO.",
+  "eseguito_il": "04/08/2023"
+}
