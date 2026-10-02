@@ -18,8 +18,11 @@ def serie_mensile(d):
     s = s.asfreq("MS", fill_value=0)
     # mesi finali con pochissimi dati = archivio non ancora aggiornato, non un vero calo: si escludono
     soglia = .4 * s.median()
-    pieni = s[(s >= soglia) & (s.index.month != 8)]          # agosto e' basso per ferie, non conta
-    return s.loc[:pieni.index[-1]]
+    ok = (s.to_numpy() >= soglia) & (s.index.month.to_numpy() != 8)   # agosto e' basso per ferie, non conta
+    if not ok.any():
+        return s
+    ultimo = ok.nonzero()[0][-1]
+    return s.iloc[:ultimo + 1]
 
 
 def modelli():

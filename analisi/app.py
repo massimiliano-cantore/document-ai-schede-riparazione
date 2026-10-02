@@ -36,11 +36,17 @@ m = f.groupby(f.ricevuto_il.dt.to_period("M")).size(); m.index = m.index.to_time
 st.subheader("Rientri al mese"); st.line_chart(m)
 
 st.subheader("Previsione prossimi 6 mesi")
-s, prev, banda, err = prevedi(f)
-tab = pd.DataFrame({"storico": s.iloc[-24:], "previsione": pd.concat([s.iloc[-1:], prev])})  # unisce le due linee
-st.line_chart(tab, color=["#e8702a", "#1f5fbf"])
-st.caption(f"Modello scelto: {err.index[0]} (errore medio {err.iloc[0]:.0f} rientri/mese sugli ultimi 12 mesi, "
-           f"confrontato con: " + ", ".join(f"{k} {v:.0f}" for k, v in err.iloc[1:].items()) + ")")
+try:
+    s, prev, banda, err = prevedi(f)
+except Exception:
+    s = None
+if s is None:
+    st.info("Con questi filtri lo storico non basta per una previsione affidabile (servono almeno 3 anni di dati).")
+else:
+    tab = pd.DataFrame({"storico": s.iloc[-24:], "previsione": pd.concat([s.iloc[-1:], prev])})  # unisce le due linee
+    st.line_chart(tab, color=["#e8702a", "#1f5fbf"])
+    st.caption(f"Modello scelto: {err.index[0]} (errore medio {err.iloc[0]:.0f} rientri/mese sugli ultimi 12 mesi, "
+               f"confrontato con: " + ", ".join(f"{k} {v:.0f}" for k, v in err.iloc[1:].items()) + ")")
 
 a, b = st.columns(2)
 a.subheader("Top 10 clienti"); a.bar_chart(f.cliente.value_counts().head(10).rename("count"), horizontal=True, sort="-count")
