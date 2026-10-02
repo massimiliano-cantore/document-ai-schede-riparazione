@@ -47,9 +47,28 @@ La raccolta dei ritagli resta privata e non è nel repository.
 I campi numerici liberi scritti a mano (il seriale soprattutto) restano il limite di un modello 7B: la risposta del sistema è
 **sapere quando non sa**. Con la segnalazione, 7 errori su 10 vengono indirizzati a un controllo umano, invece di finire nel database.
 
+### Confronto con modelli a pagamento (Claude via API, stesse 100 schede, stesso prompt e stessa valutazione)
+
+| | **Qwen2.5-VL-7B + pipeline** | Claude Haiku 4.5 + catalogo | Claude Sonnet 5 + catalogo |
+|---|---|---|---|
+| Costo per 100 schede | **$0** (GPU gratuita Kaggle) | $0,60 | $2,25 |
+| Secondi per scheda | 55 | **4** | 8 |
+| Campi stampati | **100%** | **100%** | 98% |
+| Campi scritti a mano | 85% | 75% | **86%** |
+| Codice componente | **95%** | 83% | 89% |
+| Seriale | 32% | 3% | **40%** |
+| Parole delle note ritrovate | 72% | 52% | **92%** |
+| Schede perfette | 7 | 0 | **22** |
+| **Errori segnalati come incerti** | **70%** | 54% | 33% |
+
+Sonnet 5 è il lettore migliore (soprattutto sul testo libero delle note), a circa 2 centesimi a scheda; su 2 schede su 100
+non ha prodotto il JSON (contate come errate). Il modello gratuito da 7B, con catalogo, seconda lettura e voto a maggioranza,
+lo eguaglia sui campi scritti a mano e intercetta il doppio degli errori. Predizioni e report in `risultati/confronto_claude/`,
+script in `estrazione/esegui_claude.py`. Prossimo passo: fine-tuning di Qwen sulle schede sintetiche.
+
 ## Limiti e prossimi passi
 - Numeri misurati su schede sintetiche. La pipeline è stata validata in privato su un campione di schede reali (non pubblicabili): stampati letti al 100%; sulla parte a mano, quando due modelli gratuiti (Qwen2.5-VL-7B e Qwen3-VL-8B) concordano la lettura è quasi sempre corretta, e il disaccordo diventa il segnale per il controllo umano.
-- Seriale: provare un modello più grande o un OCR di sole cifre sul ritaglio.
+- Seriale: resta difficile per tutti i modelli (max 40%): prossimo passo fine-tuning su schede sintetiche o OCR di sole cifre sul ritaglio.
 - La segnalazione è ancora prudente (molti campi corretti segnalati): da calibrare.
 
 ## 3. Analisi dei resi e previsione
