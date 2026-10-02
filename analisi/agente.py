@@ -104,7 +104,27 @@ def client(provider=None, api_key=None, modello=None):
     key = api_key or os.getenv(f"{provider.upper()}_API_KEY")
     if not key:
         raise RuntimeError(f"manca la chiave {provider.upper()}_API_KEY")
-    return OpenAI(base_url=url, api_key=key), modello or os.getenv("LLM_MODEL") or mod
+    llm = OpenAI(base_url=url, api_key=key)
+    scelto = modello or os.getenv("LLM_MODEL")
+    if not scelto:
+        scelto = scegli_modello(llm, mod)
+    return llm, scelto
+
+
+PREFERITI = ["openai/gpt-oss-120b", "llama-3.3-70b-versatile", "moonshotai/kimi-k2-instruct",
+             "qwen/qwen3-32b", "openai/gpt-oss-20b", "llama-3.1-8b-instant"]
+
+
+def scegli_modello(llm, default):
+    """I modelli gratuiti cambiano spesso: si sceglie il primo dei preferiti ancora disponibile."""
+    try:
+        disponibili = {m.id for m in llm.models.list().data}
+    except Exception:
+        return default
+    for m in [default] + PREFERITI:
+        if m in disponibili:
+            return m
+    return sorted(disponibili)[0] if disponibili else default
 
 
 def chiedi(domanda, db, llm, modello, storia=None):
