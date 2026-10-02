@@ -1,6 +1,7 @@
 """Dashboard resi KYROS ACCESS (dati sintetici). Avvio: streamlit run analisi/app.py"""
 import streamlit as st
 from analisi import carica, pulisci, DB
+import numpy as np
 import pandas as pd
 from previsione import prevedi
 
@@ -33,7 +34,14 @@ c[2].metric("Giorni mediani di lavorazione", f"{f.giorni_lavorazione.median():.0
 c[3].metric("Rottamati", f"{(f.operazione == 'rottamato').mean():.1%}")
 
 m = f.groupby(f.ricevuto_il.dt.to_period("M")).size(); m.index = m.index.to_timestamp()
-st.subheader("Rientri al mese"); st.line_chart(m)
+st.subheader("Rientri al mese")
+x = np.arange(len(m))
+pend, quota = np.polyfit(x, m.to_numpy(), 1) if len(m) > 1 else (0.0, m.mean())
+graf = pd.DataFrame({"rientri": m,
+                     "media mobile 6 mesi": m.rolling(6).mean(),
+                     "tendenza": pend * x + quota}, index=m.index)
+st.line_chart(graf, color=["#9bb7e0", "#e8702a", "#2a2a2a"])
+st.caption(f"Tendenza: {pend * 12:+.0f} rientri/mese ogni anno. La media mobile smussa stagionalità e picchi.")
 
 st.subheader("Previsione prossimi 6 mesi")
 try:

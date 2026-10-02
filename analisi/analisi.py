@@ -3,6 +3,7 @@ Uso: python analisi/analisi.py -> analisi/report/ (grafici PNG + report.md)
 """
 import sqlite3
 from pathlib import Path
+import numpy as np
 import pandas as pd
 import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -64,7 +65,12 @@ def main():
 
     # volumi mensili
     m = d.groupby("mese").size(); m.index = m.index.to_timestamp()
-    plt.figure(figsize=(11, 4.5)); m.plot(); plt.ylabel("rientri"); grafico("01_volumi_mensili.png", "Rientri al mese")
+    x = np.arange(len(m)); pend, quota = np.polyfit(x, m.to_numpy(), 1)
+    plt.figure(figsize=(11, 4.5))
+    plt.plot(m.index, m, color="#9bb7e0", label="rientri")
+    plt.plot(m.index, m.rolling(6).mean(), color="#e8702a", lw=2.5, label="media mobile 6 mesi")
+    plt.plot(m.index, pend * x + quota, "k--", lw=1.5, label=f"tendenza ({pend * 12:+.0f}/mese all'anno)")
+    plt.legend(loc="lower left", fontsize=12); plt.ylabel("rientri"); grafico("01_volumi_mensili.png", "Rientri al mese")
     stag = d.groupby(d.ricevuto_il.dt.month).size() / d.anno.nunique()
     plt.figure(figsize=(9, 5)); stag.plot.bar(); plt.xlabel("mese"); grafico("02_stagionalita.png", "Media rientri per mese dell'anno")
 
