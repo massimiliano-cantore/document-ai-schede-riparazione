@@ -41,6 +41,11 @@ ISTRUZIONI = f"""Sei l'assistente dell'ufficio riparazioni di KYROS ACCESS. Risp
 Per ogni numero usa gli strumenti: non inventare mai dati. Se una domanda e' ambigua, scegli l'interpretazione
 piu' ragionevole e dichiarala in una frase. Se i dati non bastano a rispondere, dillo.
 Nelle risposte con piu' valori usa un elenco o una piccola tabella markdown.
+Previsioni: usa sempre previsione_rientri (mai stime a mano dai dati storici). E' mensile: per settimane usa
+"a_settimana_circa", per trimestri/semestri somma i mesi; riporta l'intervallo probabile e, se utile, il confronto con
+lo stesso mese dell'anno prima. Per domande tipo "quale famiglia/articolo crescera' di piu'" chiama lo strumento piu'
+volte (una per famiglia) e confronta. Ricorda che e' una stima statistica, non una certezza.
+Oggi e' fine settembre 2026: "prossimo mese" = ottobre 2026.
 
 {SCHEMA}"""
 
@@ -52,10 +57,16 @@ STRUMENTI = [
         "parameters": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}}},
     {"type": "function", "function": {
         "name": "previsione_rientri",
-        "description": "Prevede i rientri dei prossimi 6 mesi (totale o per una famiglia di prodotto), "
-                       "con il modello migliore su backtest e il suo errore medio.",
+        "description": "Prevede i rientri MENSILI futuri (da ottobre 2026), in totale o filtrati per famiglia, articolo "
+                       "o cliente. Restituisce per ogni mese: previsione, intervallo probabile, stima settimanale e "
+                       "valore dello stesso mese dell'anno prima. Usalo per OGNI domanda sul futuro.",
         "parameters": {"type": "object", "properties": {
-            "famiglia": {"type": "string", "description": "facoltativa: serratura, cilindro, centralina, lettore, tastiera"}}}}},
+            "famiglia": {"type": "string",
+                         "enum": ["tutte", "serratura", "cilindro", "centralina", "lettore", "tastiera"]},
+            "articolo": {"type": "string", "description": "codice articolo, es '20415'; stringa vuota se nessuno"},
+            "cliente": {"type": "string", "description": "nome cliente (anche parziale); stringa vuota se nessuno"},
+            "mesi": {"type": "integer", "description": "quanti mesi prevedere, da 1 a 12"}},
+            "required": ["famiglia", "articolo", "cliente", "mesi"]}}},
 ]
 
 
@@ -87,14 +98,38 @@ class Database:
             return {"errore": str(e)[:300]}
         return {"righe_totali": len(r), "righe": json.loads(r.head(MAX_RIGHE).to_json(orient="records", force_ascii=False))}
 
-    def previsione(self, famiglia=None):
-        d = self.df if not famiglia else self.df[self.df.famiglia == famiglia.lower().strip()]
+    def previsione(self, famiglia="tutte", articolo="", cliente="", mesi=6):
+        f = (famiglia or "tutte").lower().strip()
+        f = {"serrature": "serratura", "cilindri": "cilindro", "centraline": "centralina",
+             "lettori": "lettore", "tastiere": "tastiera"}.get(f, f)
+        d, filtro = self.df, []
+        if f not in ("tutte", "totale", ""):
+            d = d[d.famiglia == f]; filtro.append(f"famiglia={f}")
+        if articolo and str(articolo).strip():
+            d = d[d.articolo.str.upper() == str(articolo).strip().upper()]; filtro.append(f"articolo={articolo}")
+        if cliente and str(cliente).strip():
+            d = d[d.cliente.str.contains(str(cliente).strip(), case=False, regex=False)]; filtro.append(f"cliente~{cliente}")
         if d.empty:
-            return {"errore": f"famiglia sconosciuta: {famiglia}"}
-        s, prev, _, err = prevedi(d)
-        return {"modello": err.index[0], "errore_medio_mensile": round(float(err.iloc[0]), 1),
-                "ultimo_mese_dati": s.index[-1].strftime("%Y-%m"),
-                "previsione": {k.strftime("%Y-%m"): int(v) for k, v in prev.items()}}
+            return {"errore": f"nessun rientro con questo filtro: {', '.join(filtro)}"}
+        mesi = max(1, min(int(mesi or 6), 12))
+        try:
+            s, prev, banda, err = prevedi(d, mesi)
+            metodo, errore = err.index[0], round(float(err.iloc[0]), 1)
+        except ValueError:   # storico troppo corto o rado (es. un singolo articolo): stima semplice
+            from previsione import serie_mensile
+            s = serie_mensile(d)
+            base = s.iloc[-12:].mean()
+            prev = pd.Series([round(base)] * mesi, index=pd.date_range(s.index[-1] + pd.offsets.MonthBegin(), periods=mesi, freq="MS"))
+            banda, metodo, errore = s.iloc[-12:].std() or 1, "media ultimi 12 mesi (storico breve)", None
+        mesi_out = []
+        for k, v in prev.items():
+            prima = s.get(k - pd.DateOffset(years=1))
+            mesi_out.append({"mese": k.strftime("%Y-%m"), "previsti": int(v),
+                             "intervallo": [int(max(0, v - banda)), int(v + banda)],
+                             "a_settimana_circa": round(v / 4.3, 1),
+                             "stesso_mese_anno_prima": None if prima is None else int(prima)})
+        return {"filtro": ", ".join(filtro) or "tutti i rientri", "metodo": metodo, "errore_medio_mensile": errore,
+                "ultimo_mese_dati": s.index[-1].strftime("%Y-%m"), "totale_periodo": int(prev.sum()), "mesi": mesi_out}
 
 
 def client(provider=None, api_key=None, modello=None):
@@ -127,17 +162,35 @@ def scegli_modello(llm, default):
     return sorted(disponibili)[0] if disponibili else default
 
 
+def chiama(llm, modello, messaggi, tentativi=3):
+    """Chiamata al modello. Con i modelli gratuiti capita che una chiamata a strumento esca malformata
+    (BadRequest 'tool_use_failed'): si riprova, poi si ripiega su un altro modello disponibile."""
+    from openai import BadRequestError
+    modelli = [modello] + [m for m in PREFERITI if m != modello]
+    ultimo = None
+    for mod in modelli[:3]:
+        for t in range(tentativi):
+            try:
+                r = llm.chat.completions.create(model=mod, messages=messaggi, tools=STRUMENTI,
+                                                temperature=0 if t == 0 else 0.3)
+                return r.choices[0].message
+            except BadRequestError as e:
+                ultimo = e
+                if "model" in str(e).lower() and ("not found" in str(e).lower() or "decommission" in str(e).lower()):
+                    break   # modello non disponibile: passa al successivo
+    raise ultimo
+
+
 def chiedi(domanda, db, llm, modello, storia=None):
     """Ciclo agente: il modello chiama strumenti finche' non ha la risposta.
     Restituisce (risposta, passi) dove passi elenca le chiamate fatte, per trasparenza."""
     messaggi = [{"role": "system", "content": ISTRUZIONI}] + (storia or []) + [{"role": "user", "content": domanda}]
     passi = []
     for _ in range(MAX_PASSI):
-        r = llm.chat.completions.create(model=modello, messages=messaggi, tools=STRUMENTI, temperature=0)
-        m = r.choices[0].message
+        m = chiama(llm, modello, messaggi)
         if not m.tool_calls:
             return m.content or "", passi
-        messaggi.append({"role": "assistant", "content": m.content or "",
+        messaggi.append({"role": "assistant", "content": m.content or None,
                          "tool_calls": [{"id": t.id, "type": "function",
                                          "function": {"name": t.function.name, "arguments": t.function.arguments}}
                                         for t in m.tool_calls]})
@@ -146,12 +199,15 @@ def chiedi(domanda, db, llm, modello, storia=None):
                 arg = json.loads(t.function.arguments or "{}")
             except json.JSONDecodeError:
                 arg = {}
-            if t.function.name == "esegui_sql":
-                out = db.sql(arg.get("query", ""))
-            elif t.function.name == "previsione_rientri":
-                out = db.previsione(arg.get("famiglia"))
-            else:
-                out = {"errore": "strumento sconosciuto"}
+            try:
+                if t.function.name == "esegui_sql":
+                    out = db.sql(arg.get("query", ""))
+                elif t.function.name == "previsione_rientri":
+                    out = db.previsione(arg.get("famiglia"), arg.get("articolo", ""), arg.get("cliente", ""), arg.get("mesi", 6))
+                else:
+                    out = {"errore": "strumento sconosciuto"}
+            except Exception as e:   # un errore dello strumento torna al modello invece di bloccare la chat
+                out = {"errore": f"{type(e).__name__}: {e}"[:300]}
             passi.append({"strumento": t.function.name, "argomenti": arg, "esito": out})
             messaggi.append({"role": "tool", "tool_call_id": t.id, "content": json.dumps(out, ensure_ascii=False)[:6000]})
     return "Non sono riuscito a completare la risposta entro il numero massimo di passi.", passi

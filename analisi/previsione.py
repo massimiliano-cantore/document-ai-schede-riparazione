@@ -54,14 +54,14 @@ def valuta(s):
     return pd.Series(err).sort_values()
 
 
-def prevedi(d):
+def prevedi(d, orizzonte=ORIZZONTE):
     s = serie_mensile(d)
     if len(s) < 24 + TEST:
         raise ValueError("servono almeno 3 anni di storico")
     err = valuta(s)
     migliore = err.index[0]
-    futuro = pd.date_range(s.index[-1] + pd.offsets.MonthBegin(), periods=ORIZZONTE, freq="MS")
-    prev = pd.Series(modelli()[migliore](s, ORIZZONTE), index=futuro).clip(lower=0).round()
+    futuro = pd.date_range(s.index[-1] + pd.offsets.MonthBegin(), periods=orizzonte, freq="MS")
+    prev = pd.Series(modelli()[migliore](s, orizzonte), index=futuro).clip(lower=0).round()
     banda = err.iloc[0] * 1.5                # banda indicativa ~ errore medio del test
     return s, prev, banda, err
 
