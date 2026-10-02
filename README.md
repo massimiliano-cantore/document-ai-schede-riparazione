@@ -94,10 +94,27 @@ propria scheda, quindi il numero di scheda fa parte della chiave.
 
 ![dashboard](analisi/report/dashboard.png)
 
+## 4. Assistente: domande in italiano sull'archivio resi
+
+Una chat (pagina **Assistente** della demo) a cui chiedere, per esempio, *"quali componenti si sostituiscono più spesso
+sulle serrature?"* o *"quanti rientri prevedi per le centraline nei prossimi 3 mesi?"*.
+
+- **Agente con strumenti** (`analisi/agente.py`): il modello linguistico non vede i dati, vede solo lo schema del database.
+  Decide da solo quali strumenti usare: `esegui_sql` (query SQLite in **sola lettura**: scritture e query multiple
+  vengono bloccate) e `previsione_rientri` (stesso modello della dashboard, filtrabile per famiglia, articolo o cliente,
+  da 1 a 12 mesi, con intervallo probabile). Se una query fallisce, l'errore torna al modello che la corregge.
+- **Trasparenza**: sotto ogni risposta la chat mostra le query eseguite e i risultati usati.
+- **Modello gratuito**: LLM open source servito da Groq (scelto in automatico tra quelli disponibili), interfaccia
+  compatibile OpenAI, quindi sostituibile con qualsiasi altro fornitore.
+- **Valutazione** (`analisi/valuta_agente.py`): 15 domande con risposta calcolata a mano in SQL; una risposta è giusta
+  solo se contiene il valore esatto. Risultato: **15/15**. Alla prima esecuzione erano 12/15: due errori derivavano da
+  una descrizione ambigua dello schema (rientro "aperto", rientri vs pezzi), corretta; il terzo era un formato di data
+  non riconosciuto dal controllo. È un test piccolo: misura le domande tipiche, non garantisce l'assenza di errori.
+
 ## Struttura
 ```
 generator/    genera_schede.py, inchiostro_reale.py, mano_tratti.py
 estrazione/   prompt.py, schema.py, esegui_qwen.py, esegui_campi.py, ripara_json.py, correggi.py, unisci_campi.py, valuta.py, catalogo.json
 risultati/    report JSON delle tre fasi
-analisi/      genera_db.py, analisi.py, previsione.py, app.py, report/
+analisi/      genera_db.py, analisi.py, previsione.py, app.py (menu), dashboard.py, assistente.py, agente.py, valuta_agente.py, report/
 ```
