@@ -54,6 +54,8 @@ I campi numerici liberi scritti a mano (il seriale soprattutto) restano il limit
 
 ## 3. Analisi dei resi e previsione
 
+🔗 **Demo online:** https://kyros-resi-dashboard.streamlit.app/
+
 Una volta estratte, le schede finiscono in un database. `analisi/` lavora su un database **sintetico** di ~7.400 rientri
 (2022-2026) che imita la forma di un archivio reale: stagionalità (agosto chiuso), pochi clienti che pesano molto,
 tempi di lavorazione, esiti e anche gli **errori tipici dell'inserimento manuale**.
