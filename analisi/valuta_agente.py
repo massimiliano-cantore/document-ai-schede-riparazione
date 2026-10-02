@@ -10,7 +10,7 @@ DOMANDE = [  # (domanda, SQL di riferimento: i valori della prima riga/colonne a
     ("Quanti rientri sono ancora aperti?", "SELECT COUNT(*) FROM rientri WHERE data_chiusura IS NULL"),
     ("Qual è l'articolo con più rientri in assoluto?", "SELECT articolo FROM rientri GROUP BY 1 ORDER BY COUNT(*) DESC LIMIT 1"),
     ("Quale cliente ha mandato più resi nel 2025?", "SELECT cliente FROM rientri WHERE anno=2025 GROUP BY 1 ORDER BY COUNT(*) DESC LIMIT 1"),
-    ("Quanti pezzi sono stati rottamati in totale?", "SELECT COUNT(*) FROM rientri WHERE operazione='rottamato'"),
+    ("Quanti rientri sono stati rottamati in totale?", "SELECT COUNT(*) FROM rientri WHERE operazione='rottamato'"),
     ("Quale famiglia di prodotto ha più rientri?", "SELECT famiglia FROM rientri GROUP BY 1 ORDER BY COUNT(*) DESC LIMIT 1"),
     ("In quale mese del 2023 sono arrivati più rientri? Dimmi il mese in formato AAAA-MM.",
      "SELECT strftime('%Y-%m', ricevuto_il) FROM rientri WHERE anno=2023 GROUP BY 1 ORDER BY COUNT(*) DESC LIMIT 1"),
@@ -32,7 +32,12 @@ DOMANDE = [  # (domanda, SQL di riferimento: i valori della prima riga/colonne a
 
 def norm(x):
     s = re.sub(r"(?<=\d)[.\s](?=\d{3}\b)", "", str(x))   # 1.651 / 1 651 -> 1651
-    return s.lower().replace("*", "").replace("`", "")
+    s = s.lower().replace("*", "").replace("`", "").replace("\u2011", "-").replace("\u2013", "-")
+    mesi = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre",
+            "ottobre", "novembre", "dicembre"]
+    for i, m in enumerate(mesi, 1):   # "gennaio 2023" -> "2023-01"
+        s = re.sub(rf"{m}\s+(\d{{4}})", rf"\1-{i:02d}", s)
+    return s
 
 
 def main():

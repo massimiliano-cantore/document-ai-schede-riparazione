@@ -28,10 +28,13 @@ rientri(id, riparazione_numero TEXT es '16/10', anno INT, scheda_progressiva INT
         tipo_cliente TEXT, articolo TEXT, famiglia TEXT, quantita INT, ddt_numero TEXT, ddt_data DATE,
         ricevuto_il DATE, scheda_consegnata DATE, data_chiusura DATE, giorni_lavorazione REAL,
         operazione TEXT, in_garanzia INT 0/1, note TEXT)
-  - una riga = un pezzo rientrato (pezzi uguali dello stesso reso hanno scheda_progressiva diversa)
+  - una riga = un rientro, cioe' una scheda di riparazione (pezzi uguali dello stesso reso hanno scheda_progressiva
+    diversa); 'quanti rientri' = COUNT(*). quantita = numero di pezzi su quella riga: usa SUM(quantita) solo se la
+    domanda chiede esplicitamente il numero di pezzi
   - famiglia in ('serratura','cilindro','centralina','lettore','tastiera')
-  - operazione = esito: 'spedito' (riparato e rispedito), 'mpf' (in attesa/messo fuori produzione), 'rottamato',
-    'sostituito', 'reso a cliente'; NULL = ancora aperto (anche data_chiusura NULL)
+  - operazione = esito previsto/finale: 'spedito' (riparato e rispedito), 'mpf', 'rottamato', 'sostituito',
+    'reso a cliente'. E' compilato anche per i rientri aperti.
+  - rientro APERTO (non ancora chiuso) = data_chiusura IS NULL; chiuso = data_chiusura valorizzata
   - date in formato 'YYYY-MM-DD'; usa strftime('%Y-%m', ricevuto_il) per i mesi
 pezzi(rientro_id -> rientri.id, codice TEXT es 'SCB1180', descrizione TEXT es 'CIRCUITO',
       intervento TEXT 'S'=sostituito 'A'=aggiornato 'R'=riparato 'O'=altro, quantita INT)
