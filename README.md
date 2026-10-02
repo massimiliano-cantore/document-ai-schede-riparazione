@@ -48,13 +48,35 @@ I campi numerici liberi scritti a mano (il seriale soprattutto) restano il limit
 **sapere quando non sa**. Con la segnalazione, 7 errori su 10 vengono indirizzati a un controllo umano, invece di finire nel database.
 
 ## Limiti e prossimi passi
-- Numeri misurati su schede sintetiche; la validazione su schede reali avviene in privato.
+- Numeri misurati su schede sintetiche. La pipeline è stata validata in privato su un campione di schede reali (non pubblicabili): stampati letti al 100%; sulla parte a mano, quando due modelli gratuiti (Qwen2.5-VL-7B e Qwen3-VL-8B) concordano la lettura è quasi sempre corretta, e il disaccordo diventa il segnale per il controllo umano.
 - Seriale: provare un modello più grande o un OCR di sole cifre sul ritaglio.
 - La segnalazione è ancora prudente (molti campi corretti segnalati): da calibrare.
+
+## 3. Analisi dei resi e previsione
+
+Una volta estratte, le schede finiscono in un database. `analisi/` lavora su un database **sintetico** di ~7.400 rientri
+(2022-2026) che imita la forma di un archivio reale: stagionalità (agosto chiuso), pochi clienti che pesano molto,
+tempi di lavorazione, esiti e anche gli **errori tipici dell'inserimento manuale**.
+
+- `genera_db.py` crea il database SQLite (clienti, articoli, rientri, pezzi sostituiti).
+- `analisi.py` pulisce i dati e produce il report: righe copiate due volte, esiti scritti male ("speditp"),
+  date impossibili (arrivo nel futuro, chiusura prima dell'arrivo), mesi finali non ancora caricati.
+- `previsione.py` prevede i rientri dei prossimi 6 mesi. Tre modelli (ingenuo stagionale, media stagionale,
+  Holt-Winters) sono confrontati su un backtest onesto: ogni mese degli ultimi 12 previsto con i soli dati precedenti.
+  Vince il più accurato; errore medio ~23 rientri/mese (~18%).
+- `app.py` è la dashboard Streamlit con filtri per anno e famiglia di prodotto.
+
+Stessa pipeline eseguita in privato sull'archivio reale: i numeri chiave hanno lo stesso ordine di grandezza e la
+pulizia ha trovato problemi veri (date nel futuro, chiusure prima dell'arrivo, mesi non aggiornati).
+Una lezione utile: righe "identiche" non sono sempre doppioni — pezzi uguali dello stesso reso hanno ciascuno la
+propria scheda, quindi il numero di scheda fa parte della chiave.
+
+![dashboard](analisi/report/dashboard.png)
 
 ## Struttura
 ```
 generator/    genera_schede.py, inchiostro_reale.py, mano_tratti.py
 estrazione/   prompt.py, schema.py, esegui_qwen.py, esegui_campi.py, ripara_json.py, correggi.py, unisci_campi.py, valuta.py, catalogo.json
 risultati/    report JSON delle tre fasi
+analisi/      genera_db.py, analisi.py, previsione.py, app.py, report/
 ```
