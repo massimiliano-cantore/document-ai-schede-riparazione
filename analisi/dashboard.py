@@ -1,0 +1,70 @@
+"""Dashboard resi KYROS ACCESS (dati sintetici). Avvio: streamlit run analisi/app.py"""
+import streamlit as st
+from analisi import carica, pulisci, DB
+import numpy as np
+import pandas as pd
+from previsione import prevedi
+
+if not DB.exists():
+    import genera_db   # serve il generatore della tappa 2
+    genera_db.main()
+
+
+@st.cache_data
+def dati():
+    d, p = carica()
+    d, log = pulisci(d)
+    return d, p, log
+
+
+d, p, log = dati()
+st.title("Analisi resi e riparazioni - KYROS ACCESS")
+st.caption("Azienda e dati interamente sintetici, generati per il portfolio.")
+
+with st.sidebar:
+    anni = st.multiselect("Anno", sorted(d.anno.unique()), default=sorted(d.anno.unique()))
+    fam = st.multiselect("Famiglia", sorted(d.famiglia.unique()), default=sorted(d.famiglia.unique()))
+f = d[d.anno.isin(anni) & d.famiglia.isin(fam)]
+
+c = st.columns(4)
+c[0].metric("Rientri", f"{len(f):,}".replace(",", "."))
+c[1].metric("Clienti", f.cliente.nunique())
+c[2].metric("Giorni mediani di lavorazione", f"{f.giorni_lavorazione.median():.0f}")
+c[3].metric("Rottamati", f"{(f.operazione == 'rottamato').mean():.1%}")
+
+m = f.groupby(f.ricevuto_il.dt.to_period("M")).size(); m.index = m.index.to_timestamp()
+st.subheader("Rientri al mese")
+x = np.arange(len(m))
+pend, quota = np.polyfit(x, m.to_numpy(), 1) if len(m) > 1 else (0.0, m.mean())
+graf = pd.DataFrame({"rientri": m,
+                     "media mobile 6 mesi": m.rolling(6).mean(),
+                     "tendenza": pend * x + quota}, index=m.index)
+st.line_chart(graf, color=["#9bb7e0", "#e8702a", "#2a2a2a"])
+st.caption(f"Tendenza: {pend * 12:+.0f} rientri/mese ogni anno. La media mobile smussa stagionalità e picchi.")
+
+st.subheader("Previsione prossimi 6 mesi")
+try:
+    s, prev, banda, err = prevedi(f)
+except Exception:
+    s = None
+if s is None:
+    st.info("Con questi filtri lo storico non basta per una previsione affidabile (servono almeno 3 anni di dati).")
+else:
+    tab = pd.DataFrame({"storico": s.iloc[-24:], "previsione": pd.concat([s.iloc[-1:], prev])})  # unisce le due linee
+    st.line_chart(tab, color=["#e8702a", "#1f5fbf"])
+    st.caption(f"Modello scelto: {err.index[0]} (errore medio {err.iloc[0]:.0f} rientri/mese sugli ultimi 12 mesi, "
+               f"confrontato con: " + ", ".join(f"{k} {v:.0f}" for k, v in err.iloc[1:].items()) + ")")
+
+a, b = st.columns(2)
+a.subheader("Top 10 clienti"); a.bar_chart(f.cliente.value_counts().head(10).rename("count"), horizontal=True, sort="-count")
+b.subheader("Top 10 articoli"); b.bar_chart(f.articolo.value_counts().head(10).rename("count"), horizontal=True, sort="-count")
+
+a, b = st.columns(2)
+pp = p[p.rientro_id.isin(f.id)]
+pz = (pp.codice + " - " + pp.descrizione).value_counts().head(10)
+a.subheader("Componenti più sostituiti"); a.bar_chart(pz.rename("count"), horizontal=True, sort="-count")
+b.subheader("Esiti"); b.bar_chart(f.operazione.value_counts())
+
+with st.expander("Qualità dei dati: cosa è stato corretto"):
+    for k, v in log.items():
+        st.write(f"- {k}: **{v}**")
