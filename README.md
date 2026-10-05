@@ -64,11 +64,35 @@ I campi numerici liberi scritti a mano (il seriale soprattutto) restano il limit
 Sonnet 5 è il lettore migliore (soprattutto sul testo libero delle note), a circa 2 centesimi a scheda; su 2 schede su 100
 non ha prodotto il JSON (contate come errate). Il modello gratuito da 7B, con catalogo, seconda lettura e voto a maggioranza,
 lo eguaglia sui campi scritti a mano e intercetta il doppio degli errori. Predizioni e report in `risultati/confronto_claude/`,
-script in `estrazione/esegui_claude.py`. Prossimo passo: fine-tuning di Qwen sulle schede sintetiche.
+script in `estrazione/esegui_claude.py`.
+
+### Fine-tuning di Qwen sulle schede sintetiche (QLoRA, Unsloth, Kaggle T4)
+
+800 schede sintetiche nuove (mai usate nel test), 1 epoca, LoRA r=16 su visione e linguaggio, immagini 896×1267,
+4,8 ore su una T4 gratuita. Stesse 100 schede di test, stessa valutazione, **una sola lettura senza pipeline**:
+
+| | Qwen base + pipeline | **Qwen addestrato (solo modello)** | Claude Sonnet 5 + catalogo |
+|---|---|---|---|
+| Campi scritti a mano | 85% | **96%** | 86% |
+| Codice componente | 95% | 94% | 89% |
+| Seriale | 32% | **73%** | 40% |
+| Parole delle note ritrovate | 72% | **99%** | 92% |
+| Schede perfette | 7 | **48** | 22 |
+| Errori segnalati come incerti | **70%** | 0% | 33% |
+| Costo per 100 schede | $0 | $0 | $2,25 |
+
+**Lettura onesta.** Sulle schede sintetiche il modello addestrato batte tutti, ma il test viene dallo stesso generatore
+dell'addestramento: misura quanto il modello ha imparato *questo* modulo, non quanto generalizza. E ha perso la capacità di
+dubitare: legge con sicurezza anche quando sbaglia, quindi la segnalazione va ricostruita (es. confronto con il modello base).
+La prova vera è sui documenti reali: in una validazione privata (schede reali non pubblicabili, mai viste in addestramento)
+il solo addestramento sintetico migliora poco; aggiungendo all'addestramento schede reali etichettate da un modello più grande
+(distillazione, ~10 $ di etichettatura) il 7B gratuito si avvicina a Sonnet sui campi principali, restando sotto sul testo libero.
+Conclusione: buono come **assistente con revisione umana**, non ancora per l'inserimento automatico. Script in `finetune/`,
+report in `risultati/finetune/`.
 
 ## Limiti e prossimi passi
 - Numeri misurati su schede sintetiche. La pipeline è stata validata in privato su un campione di schede reali (non pubblicabili): stampati letti al 100%; sulla parte a mano, quando due modelli gratuiti (Qwen2.5-VL-7B e Qwen3-VL-8B) concordano la lettura è quasi sempre corretta, e il disaccordo diventa il segnale per il controllo umano.
-- Seriale: resta difficile per tutti i modelli (max 40%): prossimo passo fine-tuning su schede sintetiche o OCR di sole cifre sul ritaglio.
+- Seriale: difficile per i modelli generici (max 40%); il fine-tuning lo porta al 73% sulle sintetiche.
 - La segnalazione è ancora prudente (molti campi corretti segnalati): da calibrare.
 
 ## 3. Analisi dei resi e previsione
@@ -115,6 +139,7 @@ sulle serrature?"* o *"quanti rientri prevedi per le centraline nei prossimi 3 m
 ```
 generator/    genera_schede.py, inchiostro_reale.py, mano_tratti.py
 estrazione/   prompt.py, schema.py, esegui_qwen.py, esegui_campi.py, ripara_json.py, correggi.py, unisci_campi.py, valuta.py, catalogo.json
-risultati/    report JSON delle tre fasi
+risultati/    report JSON delle tre fasi, confronto_claude/, finetune/
+finetune/     finetune_kaggle.py (genera / train / test), prepara_train.py
 analisi/      genera_db.py, analisi.py, previsione.py, app.py (menu), dashboard.py, assistente.py, agente.py, valuta_agente.py, report/
 ```
